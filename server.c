@@ -10,7 +10,7 @@
 
 #define PORT 7777
 #define BACKLOG 1 // will only accept 1 connection at a time
-
+#define BUFFERSIZE 1024
 
 
 int main(){
@@ -38,7 +38,7 @@ int main(){
         close(socketfd);
         exit(1);
     }
-    printf("Socket bound to port number: %d/n", PORT);
+    printf("Socket bound to port number: %d\n", PORT);
     
     // begin listening on the port for connections
     if(listen(socketfd, BACKLOG) == -1){
@@ -50,7 +50,7 @@ int main(){
 
     // accept a connection when someone tries to connect
     struct sockaddr_in clientAddress; // stores the clients info
-    socklen_t clientAddressLength; // to hold the length the client gives 
+    socklen_t clientAddressLength  = sizeof(clientAddress); // to hold the length the client gives 
     int clientfd = accept(socketfd, &clientAddress, &clientAddressLength);
     if( clientfd == -1){
         perror("faiedl to accpet");
@@ -59,5 +59,33 @@ int main(){
     }
     printf("Client accepted on port %d client socket number: %d\n", PORT, clientfd);
 
+    while(1){
+        // get command from client 
+        char buffer[BUFFERSIZE];
+        int bytesReceived = recv(clientfd, buffer, sizeof(buffer)-1, 0);
+        if(bytesReceived == -1){
+            perror("receive failed");
+        }else if(bytesReceived > 0){
+            buffer[bytesReceived] = '\0'; // null terminate what the client sent
+        }else{
+            printf("client was disconnected");
+            break;
+        }
 
+
+        // DOWNLOAD
+        if(strncmp(buffer, "DOWNLOAD", 8) == 0){
+
+        }
+        // UPLOAD
+
+        // LIST
+
+        // DELETE
+
+        // RENAME
+
+        // EXIT
+    }
+    close(socketfd);
 }
