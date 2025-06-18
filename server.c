@@ -6,6 +6,8 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <dirent.h>
+
 
 
 #define PORT 7777
@@ -53,16 +55,22 @@ int main(){
     socklen_t clientAddressLength  = sizeof(clientAddress); // to hold the length the client gives 
     int clientfd = accept(socketfd, &clientAddress, &clientAddressLength);
     if( clientfd == -1){
-        perror("faiedl to accpet");
+        perror("failed to accpet");
         close(socketfd);
         exit(1);
     }
     printf("Client accepted on port %d client socket number: %d\n", PORT, clientfd);
 
+
+
+    char buffer[BUFFERSIZE]; // buffer to receive client commands
     while(1){
+        // send client instructions to enter
+        const char *prompt = "Enter a command:\n  LIST\n  DOWNLOAD\n  UPLOAD\n  DELETE\n  RENAME\n  EXIT\n\n->";
+        send(clientfd, prompt, strlen(prompt), 0);
+
         // get command from client 
-        char buffer[BUFFERSIZE];
-        int bytesReceived = recv(clientfd, buffer, sizeof(buffer)-1, 0);
+        int bytesReceived = recv(clientfd, buffer, sizeof(buffer)-1, 0); // blocking operation
         if(bytesReceived == -1){
             perror("receive failed");
         }else if(bytesReceived > 0){
@@ -71,21 +79,31 @@ int main(){
             printf("client was disconnected");
             break;
         }
+        // receive sucessful!
 
+  
+        if(strncmp(buffer, "LIST", 4) == 0){              // LIST
+            DIR *directory = opendir("storage");
+            if (directory == NULL) {
+                send(clientfd, "ERROR: cannot open storage\n", strlen("ERROR: cannot open storage\n"), 0);
+            }
+            // TO DO
+            closedir(directory);
+            send(clientfd, "END\n", 4, 0);
+            continue;
+        }else if(strncmp(buffer, "UPLOAD", 6) == 0){      // UPLOAD
 
-        // DOWNLOAD
-        if(strncmp(buffer, "DOWNLOAD", 8) == 0){
+        }else if(strncmp(buffer, "DOWNLOAD", 8) == 0){    // DOWNLOAD
+
+        }else if(strncmp(buffer, "DELETE", 6) == 0){      // DELETE
+
+        }else if(strncmp(buffer, "RENAME", 6) == 0){      // RENAME
+
+        }else if(strncmp(buffer, "EXIT", 4) == 0){        // EXIT
+
+        }else{
 
         }
-        // UPLOAD
-
-        // LIST
-
-        // DELETE
-
-        // RENAME
-
-        // EXIT
     }
     close(socketfd);
 }
