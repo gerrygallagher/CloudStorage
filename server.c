@@ -23,7 +23,7 @@ int main(){
         close(socketfd);
         exit(1);
     }
-    printf("A socket was created!");
+    printf("A socket was created!\n");
 
     // contains the info the server(this file) needs to bind to a port
     struct sockaddr_in serverAddress;
