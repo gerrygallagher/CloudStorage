@@ -158,12 +158,54 @@ int main(){
 
                 // ack
                 send(clientfd, "UPLOAD SUCCESS\n", strlen("UPLOAD SUCCESS\n"), 0);
+                printf("File Uploaded: %s", filename);
                 continue;
 
             }else if(strncmp(buffer, "DOWNLOAD", 8) == 0){    // DOWNLOAD
-                send(clientfd, "DOWNLOAD command not implemented yet\n", strlen("DOWNLOAD command not implemented yet\n"), 0);
+                // ask for filename
+                send(clientfd, "Enter filename to download\n->", strlen("Enter filename to download\n->"), 0);
+
+                //recv file name from client
+                bytesReceived = recv(clientfd, filename, sizeof(filename) - 1, 0);
+                buffer[bytesReceived] = '\0';
+
+                // open file if it exists
+                char path[BUFFERSIZE];
+                snprintf(path, sizeof(path), "storage/%s", filename);
+                FILE *fp = fopen(path, "rb");
+                if(!fp){
+                    send(clientfd, "ERROR(DOWNLOAD): cannot open file\n", strlen("ERROR(DOWNLOAD): cannot open file\n"), 0);
+                    continue;
+                }
+
+                // send file bit by bit
+                while((bytesReceived = fread(buffer, 1, BUFFERSIZE - 1, fp)) > 0){
+                    send(clientfd, buffer, bytesReceived, 0);
+                }
+                fclose(fp);
+
+                // send end so client knows thats it
+                send(clientfd, "__END__", strlen("__END__"), 0);
+                continue;
             }else if(strncmp(buffer, "DELETE", 6) == 0){      // DELETE
-                send(clientfd, "DELETE command not implemented yet\n", strlen("DELETE command not implemented yet\n"), 0);
+                // ask for filename
+                send(clientfd, "Enter filename to delete\n->", strlen("Enter filename to delete\n->"), 0);
+
+                //recv file name from client
+                bytesReceived = recv(clientfd, filename, sizeof(filename) - 1, 0);
+                buffer[bytesReceived] = '\0';
+
+                //make path to file
+                char path[BUFFERSIZE];
+                snprintf(path, sizeof(path), "storage/%s", filename);
+                
+                // remove file and send success msg or errir message
+                if(remove(path) == 0){
+                    send(clientfd, "DELETE SUCCESS\n", strlen("DELETE SUCCESS\n"), 0);
+                }else{
+                    send(clientfd, "ERROR(DELETE): failed to delete\n", strlen("ERROR(DELETE): failed to delete\n"), 0);
+                }
+                continue;
             }else if(strncmp(buffer, "RENAME", 6) == 0){      // RENAME
                 send(clientfd, "RENAME command not implemented yet\n", strlen("RENAME command not implemented yet\n"), 0);
             }else if(strncmp(buffer, "EXIT", 4) == 0){        // EXIT

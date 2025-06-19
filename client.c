@@ -40,7 +40,7 @@ int main(){
         } 
         cmd[strcspn(cmd, "\r\n")] = '\0'; // strips off \r\n and replaces w \0
 
-        if (strcmp(cmd, "LIST") == 0){
+        if (strcmp(cmd, "LIST") == 0){                // LIST
             send(sockfd, "LIST", strlen("LIST"), 0);
             printf("List of files:\n------------\n");
             while((bytesReceived = recv(sockfd, buffer, sizeof(buffer) - 1, 0)) > 0){
@@ -56,7 +56,8 @@ int main(){
                 printf("%s", buffer);
             }
             printf("------------\n\n\n");
-        }else if (strcmp(cmd, "UPLOAD") == 0){
+            continue;
+        }else if (strcmp(cmd, "UPLOAD") == 0){        // UPLOAD
             //send command
             send(sockfd, "UPLOAD", strlen("UPLOAD"), 0);
 
@@ -85,7 +86,7 @@ int main(){
             }
 
             // send file contents
-            while ((bytesReceived = fread(buffer, 1, BUFFERSIZE - 1, fp)) > 0) {
+            while((bytesReceived = fread(buffer, 1, BUFFERSIZE - 1, fp)) > 0){
                 send(sockfd, buffer, bytesReceived, 0);
             }
             fclose(fp);
@@ -93,22 +94,82 @@ int main(){
             // send end marker
             send(sockfd, "__END__", strlen("__END__"), 0);
 
-            // wait for final ack
+            // get last ack
             bytesReceived = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
             if (bytesReceived > 0) {
                 buffer[bytesReceived] = '\0';
                 printf("%s\n", buffer);  // should be "UPLOAD SUCCESS"
             }
+            continue;
+        }else if(strcmp(cmd, "DOWNLOAD") == 0){
+            send(sockfd, "DOWNLOAD", 8, 0);
 
-        }else if (strcmp(cmd, "DOWNLOAD") == 0){
-            printf("not done DOWNLOAD yet");
+            //recv ask for file name
+            bytesReceived = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
+            buffer[bytesReceived] = '\0';
+            printf("%s", buffer);
+
+            //send filename
+            if (!fgets(filename, sizeof(filename), stdin)){
+                break;
+            }
+            filename[strcspn(filename, "\r\n")] = '\0';
+            send(sockfd, filename, strlen(filename), 0);
+
+                    
+        // create file to write to
+        FILE *fp = fopen(filename, "wb");
+        if (!fp) {
+            printf("Error creating local file\n");
+            return 1;
         }
-        else if (strcmp(cmd, "EXIT") == 0){
+
+        // Receive and write file content
+        while((bytesReceived = recv(sockfd, buffer, sizeof(buffer) - 1, 0)) > 0){
+            buffer[bytesReceived] = '\0';
+
+            // Check for end marker
+            char *endMarker = strstr(buffer, "__END__");
+            if(endMarker){
+                fwrite(buffer, 1, endMarker - buffer, fp);
+                break;
+            }
+            fwrite(buffer, 1, bytesReceived, fp);
+        }
+        fclose(fp);
+        printf("Download complete for file: %s\n", filename);
+        continue;
+        }
+        else if(strcmp(cmd, "EXIT") == 0){            // EXIT
             send(sockfd, "EXIT", 4, 0);
             bytesReceived = recv(sockfd, buffer, sizeof(buffer) -1, 0);
             buffer[bytesReceived] = '\0';
             printf("%s", buffer);
             break;
+        }else if(strcmp(cmd, "RENAME") == 0){
+
+
+        }else if(strcmp(cmd, "DELETE") == 0){
+            // send command
+            send(sockfd, "DELETE", 6, 0);
+
+            // receive msg from server
+            bytesReceived = recv(sockfd, buffer, sizeof(buffer) -1, 0);
+            buffer[bytesReceived] = '\0';
+            printf("%s", buffer);
+
+            //send filename of file to delete
+            if (!fgets(filename, sizeof(filename), stdin)){
+                break;
+            }
+            filename[strcspn(filename, "\r\n")] = '\0';
+            send(sockfd, filename, strlen(filename), 0);
+
+            //recv a success or fail msg
+            bytesReceived = recv(sockfd, buffer, sizeof(buffer) -1, 0);
+            buffer[bytesReceived] = '\0';
+            printf("%s", buffer);
+            continue;
         }
         else{
             printf("not a cmd\n");
