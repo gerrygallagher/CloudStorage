@@ -73,11 +73,7 @@ int main(){
         char buffer[BUFFERSIZE]; // buffer to receive client commands
         char filename[BUFFERSIZE]; // buffer the receive client filename
         int bytesReceived;
-        const char *prompt = "Enter a command:\n  LIST\n  DOWNLOAD\n  UPLOAD\n  DELETE\n  RENAME\n  EXIT\n\n->";
         while(1){
-            // send client instructions to enter
-            send(clientfd, prompt, strlen(prompt), 0);
-
             // get command from client 
             bytesReceived = recv(clientfd, buffer, sizeof(buffer)-1, 0); // blocking operation
             if (bytesReceived < 0) { // recv failed
