@@ -76,11 +76,11 @@ int main(){
         while(1){
             // get command from client 
             bytesReceived = recv(clientfd, buffer, sizeof(buffer)-1, 0); // blocking operation
-            if (bytesReceived < 0) { // recv failed
+            if(bytesReceived < 0){ // recv failed
                 perror("receive failed");
                 break;
             }
-            if (bytesReceived == 0) { // client closed connection
+            if(bytesReceived == 0){ // client closed connection
                 printf("Client disconnected\n");
                 break;
             }
@@ -96,14 +96,14 @@ int main(){
             if(strncmp(buffer, "LIST", 4) == 0){              // LIST
                 // open the storage directory
                 DIR *directory = opendir("storage");
-                if (directory == NULL) {
+                if(directory == NULL){
                     send(clientfd, "ERROR: cannot open storage\n", strlen("ERROR: cannot open storage\n"), 0);
                     continue;
                 }
 
                 struct dirent *entry;
-                while ((entry = readdir(directory)) != NULL) { // loop over all files in the storage directory
-                    if (entry->d_type == DT_REG) { // files only not folders or other things
+                while((entry = readdir(directory)) != NULL){ // loop over all files in the storage directory
+                    if(entry->d_type == DT_REG){ // files only not folders or other things
                         send(clientfd, entry->d_name, strlen(entry->d_name), 0); // send the file name
                         send(clientfd, "\n", 1, 0); // send a newline so the list looks good
                     }
@@ -119,7 +119,7 @@ int main(){
 
                 // recv filename
                 bytesReceived = recv(clientfd, filename, sizeof(filename) - 1, 0);
-                if (bytesReceived <= 0) {
+                if(bytesReceived <= 0){
                     send(clientfd, "ERROR(UPLOAD): didn't recv filename\n", strlen("ERROR(UPLOAD): didn't recv filename\n"), 0);
                     continue;
                 }
@@ -132,22 +132,22 @@ int main(){
                 char path[BUFFERSIZE]; 
                 snprintf(path, sizeof(path), "storage/%s", filename); // make a file called '%s', filename
                 FILE *filePointer = fopen(path, "wb");
-                if (filePointer == NULL) { 
+                if(filePointer == NULL){ 
                     send(clientfd, "ERROR(UPLOAD): couldnt create file\n", strlen("ERROR(UPLOAD): couldnt create file\n"), 0);
                     continue;
                 }
 
                 // recv file data
-                while (1) {
+                while(1){
                     bytesReceived = recv(clientfd, buffer, BUFFERSIZE - 1, 0);
-                    if (bytesReceived <= 0) {
+                    if(bytesReceived <= 0){
                         break;
                     }
                     buffer[bytesReceived] = '\0'; // null terminate 
 
                     // check for end marker
                     char *endMarker = strstr(buffer, "__END__");
-                    if (endMarker) {
+                    if(endMarker){
                         fwrite(buffer, 1, endMarker - buffer, filePointer);
                         break;
                     }

@@ -32,22 +32,22 @@ int main(){
     char buffer[BUFFERSIZE];
     int bytesReceived;
     char filename[BUFFERSIZE];
-    while (1){
+    while(1){
         printf("Enter a command:\n  LIST\n  DOWNLOAD\n  UPLOAD\n  DELETE\n  RENAME\n  EXIT\n\n->");
         fflush(stdout);
-        if (!fgets(cmd, sizeof(cmd), stdin)){
+        if(!fgets(cmd, sizeof(cmd), stdin)){
             break;
         } 
         cmd[strcspn(cmd, "\r\n")] = '\0'; // strips off \r\n and replaces w \0
 
-        if (strcmp(cmd, "LIST") == 0){                // LIST
+        if(strcmp(cmd, "LIST") == 0){                // LIST
             send(sockfd, "LIST", strlen("LIST"), 0);
             printf("List of files:\n------------\n");
             while((bytesReceived = recv(sockfd, buffer, sizeof(buffer) - 1, 0)) > 0){
                 buffer[bytesReceived] = '\0';
                 
                 char *endMarker = strstr(buffer, "END");
-                if (endMarker != NULL) {
+                if(endMarker != NULL){
                     *endMarker = '\0';  // cut off END and anything after
                     printf("%s", buffer);
                     break;
@@ -57,7 +57,7 @@ int main(){
             }
             printf("------------\n\n\n");
             continue;
-        }else if (strcmp(cmd, "UPLOAD") == 0){        // UPLOAD
+        }else if(strcmp(cmd, "UPLOAD") == 0){        // UPLOAD
             //send command
             send(sockfd, "UPLOAD", strlen("UPLOAD"), 0);
 
@@ -67,7 +67,7 @@ int main(){
             printf("%s", buffer);
 
             //send filename
-            if (!fgets(filename, sizeof(filename), stdin)){
+            if(!fgets(filename, sizeof(filename), stdin)){
                 break;
             }
             filename[strcspn(filename, "\r\n")] = '\0';
@@ -98,7 +98,7 @@ int main(){
 
             // get last ack
             bytesReceived = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
-            if (bytesReceived > 0) {
+            if(bytesReceived > 0){
                 buffer[bytesReceived] = '\0';
                 printf("%s\n", buffer);  // should be "UPLOAD SUCCESS"
             }
@@ -112,7 +112,7 @@ int main(){
             printf("%s", buffer);
 
             //send filename
-            if (!fgets(filename, sizeof(filename), stdin)){
+            if(!fgets(filename, sizeof(filename), stdin)){
                 break;
             }
             filename[strcspn(filename, "\r\n")] = '\0';
@@ -123,7 +123,7 @@ int main(){
             char path[BUFFERSIZE];
             snprintf(path, sizeof(path), "storage/%s", filename);
             FILE *fp = fopen(path, "wb");
-            if (!fp) {
+            if(!fp){
                 printf("Error creating local file\n");
                 return 1;
             }
@@ -163,7 +163,7 @@ int main(){
             printf("%s", buffer);
 
             //send filename of file to delete
-            if (!fgets(filename, sizeof(filename), stdin)){
+            if(!fgets(filename, sizeof(filename), stdin)){
                 break;
             }
             filename[strcspn(filename, "\r\n")] = '\0';
