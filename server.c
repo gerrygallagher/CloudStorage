@@ -60,7 +60,7 @@ int main(){
         // accept a connection when someone tries to connect
         struct sockaddr_in clientAddress; // stores the clients info
         socklen_t clientAddressLength  = sizeof(clientAddress); // to hold the length the client gives 
-        int clientfd = accept(socketfd, &clientAddress, &clientAddressLength);
+        int clientfd = accept(socketfd, (struct sockaddr*)&clientAddress, &clientAddressLength);
         if( clientfd == -1){
             perror("failed to accpet");
             close(socketfd);
