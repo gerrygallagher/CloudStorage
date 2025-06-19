@@ -79,7 +79,9 @@ int main(){
             printf("%s", buffer);
 
             // open file to send
-            FILE *fp = fopen(filename, "rb");
+            char path[BUFFERSIZE];
+            snprintf(path, sizeof(path), "storage/%s", filename);
+            FILE *fp = fopen(path, "rb");
             if(!fp){
                 printf("Cannot open file '%s'\n", filename);
                 return 1;
@@ -117,28 +119,30 @@ int main(){
             send(sockfd, filename, strlen(filename), 0);
 
                     
-        // create file to write to
-        FILE *fp = fopen(filename, "wb");
-        if (!fp) {
-            printf("Error creating local file\n");
-            return 1;
-        }
-
-        // Receive and write file content
-        while((bytesReceived = recv(sockfd, buffer, sizeof(buffer) - 1, 0)) > 0){
-            buffer[bytesReceived] = '\0';
-
-            // Check for end marker
-            char *endMarker = strstr(buffer, "__END__");
-            if(endMarker){
-                fwrite(buffer, 1, endMarker - buffer, fp);
-                break;
+            // create file to write to
+            char path[BUFFERSIZE];
+            snprintf(path, sizeof(path), "storage/%s", filename);
+            FILE *fp = fopen(path, "wb");
+            if (!fp) {
+                printf("Error creating local file\n");
+                return 1;
             }
-            fwrite(buffer, 1, bytesReceived, fp);
-        }
-        fclose(fp);
-        printf("Download complete for file: %s\n", filename);
-        continue;
+
+            // Receive and write file content
+            while((bytesReceived = recv(sockfd, buffer, sizeof(buffer) - 1, 0)) > 0){
+                buffer[bytesReceived] = '\0';
+
+                // Check for end marker
+                char *endMarker = strstr(buffer, "__END__");
+                if(endMarker){
+                    fwrite(buffer, 1, endMarker - buffer, fp);
+                    break;
+                }
+                fwrite(buffer, 1, bytesReceived, fp);
+            }
+            fclose(fp);
+            printf("Download complete for file: %s\n", filename);
+            continue;
         }
         else if(strcmp(cmd, "EXIT") == 0){            // EXIT
             send(sockfd, "EXIT", 4, 0);
